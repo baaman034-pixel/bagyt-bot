@@ -87,6 +87,7 @@ def home():
     return "Bot is running 24/7"
 
 def run_bot():
+    bot.delete_webhook(drop_pending_updates=True)
     bot.infinity_polling()
 
 if __name__ == "__main__":
