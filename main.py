@@ -20,27 +20,28 @@ def load_from_sheet():
         f = io.StringIO(r.text)
         reader = csv.DictReader(f)
         new_db = {}
+        print(f"Headers from sheet: {reader.fieldnames}")
         for row in reader:
-            phone_raw = row.get('phone','')
+            # поддержка и русских и английских заголовков
+            phone_raw = row.get('phone') or row.get('Телефон') or row.get('телефон') or ''
+            address = row.get('address') or row.get('Адрес') or row.get('адрес') or 'Рынок Дордой 0 Проход'
+            status = row.get('status') or row.get('Статус') or row.get('статус') or 'в пути'
+            t = row.get('time') or row.get('Время') or row.get('время') or '18:00'
+            courier = row.get('courier') or row.get('Курьер') or row.get('курьер') or 'Арген'
+
             phone = ''.join(filter(str.isdigit, str(phone_raw)))
             if not phone: continue
-            new_db[phone] = {
-                "address": row.get('address','Рынок Дордой 0 Проход') or "Рынок Дордой 0 Проход",
-                "status": row.get('status','в пути') or "в пути",
-                "time": row.get('time','18:00') or "18:00",
-                "courier": row.get('courier','Арген') or "Арген"
-            }
+            new_db[phone] = {"address": address, "status": status, "time": t, "courier": courier}
         if new_db:
             cargo_db = new_db
-            print(f"Loaded {len(cargo_db)} cargos from Sheet")
+            print(f"Loaded {len(cargo_db)} cargos: {list(cargo_db.keys())[:3]}")
     except Exception as e:
         print(f"Sheet error: {e}")
 
 load_from_sheet()
-
 def sheet_loop():
     while True:
-        time.sleep(120) # обновление каждые 2 мин
+        time.sleep(90)
         load_from_sheet()
 
 ADRES_TEXT = "📍 Наш склад: Рынок Дордой 0 Проход\n🕘 9:00-18:00"
@@ -81,7 +82,7 @@ def handle_number(message):
     bot.send_message(message.chat.id, "❌ Груз не найден.")
 
 @app.route('/')
-def home(): return "BAGYT BOT live with Google Sheet!"
+def home(): return f"BAGYT BOT live! Cargos: {len(cargo_db)}"
 
 def run_bot():
     bot.delete_webhook(drop_pending_updates=True)
